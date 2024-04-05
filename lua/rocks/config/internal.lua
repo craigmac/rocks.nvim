@@ -30,6 +30,9 @@ local default_config = {
     ---@type string Rocks declaration file path
     ---@diagnostic disable-next-line: param-type-mismatch
     config_path = vim.fs.joinpath(vim.fn.stdpath("config"), "rocks.toml"),
+    ---@type string Rocks lockfile path
+    ---@diagnostic disable-next-line: param-type-mismatch
+    lockfile_path = vim.fs.joinpath(vim.fn.stdpath("config"), "rocks.lock"),
     ---@type string Luarocks binary path
     luarocks_binary = "luarocks",
     ---@type boolean Whether to query luarocks.org lazily

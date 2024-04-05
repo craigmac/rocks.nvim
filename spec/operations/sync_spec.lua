@@ -4,14 +4,15 @@ vim.system({ "mkdir", "-p", tempdir }):wait()
 vim.g.rocks_nvim = {
     rocks_path = tempdir,
     config_path = vim.fs.joinpath(tempdir, "rocks.toml"),
+    lockfile_path = vim.fs.joinpath(tempdir, "rocks.lock"),
 }
 local nio = require("nio")
+local operations = require("rocks.operations")
+local helpers = require("rocks.operations.helpers")
+local state = require("rocks.state")
+local config = require("rocks.config.internal")
 vim.env.PLENARY_TEST_TIMEOUT = 60000 * 5
 describe("operations", function()
-    local operations = require("rocks.operations")
-    local helpers = require("rocks.operations.helpers")
-    local state = require("rocks.state")
-    local config = require("rocks.config.internal")
     vim.system({ "mkdir", "-p", config.rocks_path }):wait()
     local config_content = [[
 [rocks]
@@ -31,11 +32,11 @@ nlua = "0.1.0"
         helpers.install({ name = "sweetie.nvim", version = "1.2.1" }).wait() -- update
         -- One to downgrade
         helpers.install({ name = "haskell-tools.nvim", version = "3.0.0" }).wait()
+        -- and nlua to install
         local installed_rocks = state.installed_rocks()
-        local installed_rock_names = vim.tbl_keys(installed_rocks)
-        assert.False(vim.tbl_contains(installed_rock_names, "nlua"))
-        assert.True(vim.tbl_contains(installed_rock_names, "telescope.nvim"))
-        assert.True(vim.tbl_contains(installed_rock_names, "plenary.nvim"))
+        assert.is_not_nil(installed_rocks["telescope.nvim"])
+        assert.is_not_nil(installed_rocks["plenary.nvim"])
+        assert.is_nil(installed_rocks.nlua)
         assert.same({
             name = "sweetie.nvim",
             version = "1.2.1",
@@ -50,8 +51,7 @@ nlua = "0.1.0"
         end)
         future.wait()
         installed_rocks = state.installed_rocks()
-        installed_rock_names = vim.tbl_keys(installed_rocks)
-        assert.False(vim.tbl_contains(installed_rock_names, "telescope.nvim"))
+        assert.is_nil(installed_rocks["telescope.nvim"])
         -- FIXME: #77
         -- assert.False(vim.tbl_contains(installed_rock_names, "plenary.nvim"))
         assert.same({

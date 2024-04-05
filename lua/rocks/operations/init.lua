@@ -27,6 +27,7 @@ local handlers = require("rocks.operations.handlers")
 local parser = require("rocks.operations.parser")
 local nio = require("nio")
 local progress = require("fidget.progress")
+local lock = require("rocks.operations.lock")
 
 local operations = {}
 
@@ -192,7 +193,7 @@ operations.sync = function(user_rocks, on_complete)
             if vim.startswith(user_rocks[key].version, "scm-") then
                 user_rocks[key].version = "dev"
             end
-            local future = helpers.install(user_rocks[key])
+            local future = helpers.install(user_rocks[key], { use_lockfile = true })
             local success = pcall(future.wait)
 
             ct = ct + 1
@@ -240,7 +241,7 @@ operations.sync = function(user_rocks, on_complete)
                 message = is_downgrading and ("Downgrading: %s"):format(key) or ("Updating: %s"):format(key),
             })
 
-            local future = helpers.install(user_rocks[key])
+            local future = helpers.install(user_rocks[key], { use_lockfile = true })
             local success = pcall(future.wait)
 
             ct = ct + 1
@@ -436,6 +437,7 @@ operations.update = function()
         else
             vim_schedule_nio_wait(function()
                 fs.write_file(config.config_path, "w", tostring(user_rocks))
+                lock.update_lockfile()
             end)
         end
         nio.scheduler()
@@ -603,6 +605,7 @@ operations.add = function(arg_list, callback)
                 user_rocks.plugins[rock_name] = installed_rock.version
             end
             fs.write_file(config.config_path, "w", tostring(user_rocks))
+            lock.update_lockfile(installed_rock.name)
             if success then
                 progress_handle:finish()
                 if callback then
@@ -642,6 +645,7 @@ operations.prune = function(rock_name)
         local success = helpers.remove_recursive(rock_name, user_rock_names, progress_handle)
         vim_schedule_nio_wait(function()
             fs.write_file(config.config_path, "w", tostring(user_config))
+            lock.update_lockfile()
             if success then
                 progress_handle:finish()
             else

@@ -43,6 +43,7 @@
 - Command completions for plugins and versions on luarocks.org.
 - Binary rocks pulled from [rocks-binaries](https://nvim-neorocks.github.io/rocks-binaries/)
   so you don't have to compile them.
+- Lockfile support.
 
 ![demo](https://github.com/nvim-neorocks/rocks.nvim/assets/12857160/955c3ae7-c916-4a70-8fbd-4e28b7f0d77e)
 
@@ -327,6 +328,12 @@ Or, before rocks.nvim is initialised, with `require("rocks").packadd("<rock_name
 > Plugins that utilise these directories may impact startup time
 > (if it has `ftdetect` or `plugin` scripts), so you may or may
 > not benefit from loading them lazily.
+
+### lockfile
+
+When installing or updating, `rocks.nvim` maintains a `rocks.lock` file,
+which pins all SemVer dependency versions for each plugin.
+You can check the lockfile into SCM.
 
 ## :package: Extending `rocks.nvim`
 
