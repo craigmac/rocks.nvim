@@ -4,6 +4,34 @@
 }: final: prev: let
   lib = final.lib;
   rocks-nvim-luaPackage-override = luaself: luaprev: {
+    # Workaround for https://github.com/NixOS/nixpkgs/issues/316009
+    luarocks-rock = luaself.callPackage ({
+      buildLuarocksPackage,
+      fetchFromGitHub,
+      fetchurl,
+    }:
+      buildLuarocksPackage {
+        pname = "luarocks";
+        version = "3.11.0-1";
+        knownRockspec =
+          (fetchurl {
+            url = "mirror://luarocks/luarocks-3.11.0-1.rockspec";
+            sha256 = "0pi55445dskpw6nhrq52589h4v39fsf23c0kp8d4zg2qaf6y2n38";
+          })
+          .outPath;
+        src = fetchFromGitHub {
+          owner = "luarocks";
+          repo = "luarocks";
+          rev = "v3.11.0";
+          hash = "sha256-mSwwBuLWoMT38iYaV/BTdDmmBz4heTRJzxBHC0Vrvc4=";
+        };
+        meta = {
+          homepage = "http://www.luarocks.org";
+          description = "A package manager for Lua modules.";
+          license.fullName = "MIT";
+        };
+      }) {};
+
     toml-edit =
       (luaself.callPackage ({
         buildLuarocksPackage,
@@ -133,7 +161,7 @@
       luaOlder,
       buildLuarocksPackage,
       lua,
-      luarocks,
+      luarocks-rock,
       toml-edit,
       fidget-nvim,
       nvim-nio,
@@ -147,7 +175,7 @@
         src = self;
         disabled = luaOlder "5.1";
         propagatedBuildInputs = [
-          luarocks
+          luarocks-rock
           toml-edit
           fidget-nvim
           nvim-nio
@@ -200,7 +228,7 @@ in {
             -- Copied from installer.lua
             local rocks_config = {
                 rocks_path = vim.fn.stdpath("data") .. "/rocks",
-                luarocks_binary = "${final.lua51Packages.luarocks}/bin/luarocks",
+                luarocks_binary = "${final.lua51Packages.luarocks-rock}/bin/luarocks",
             }
 
             vim.g.rocks_nvim = rocks_config
